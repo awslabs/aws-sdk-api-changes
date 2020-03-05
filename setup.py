@@ -25,7 +25,7 @@ setup(
         "botocore>=1.12.228",
         "Click==7.0",
         "docutils==0.15.2",
-        "Jinja2==2.10.3",
+        "Jinja2>=2.10.1",
         "jmespath==0.9.4",
         "MarkupSafe==1.1.1",
         "pycparser==2.19",
@@ -33,7 +33,7 @@ setup(
         "python-dateutil==2.8.0",
         "six==1.13.0",
         "lxml==4.4.2",
-        "feedgen==0.8.0",
+        "feedgen>=0.9.0",
         "urllib3==1.25.7"
     ],
 )
