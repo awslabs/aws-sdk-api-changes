@@ -1,0 +1,12 @@
+bin/
+commands/
+lib/
+include/
+share/
+__pycache__
+cache.json
+.python-version
+tf/.terraform
+tf/terraform.tfstate.backup 
+.Python
+.DS_Store

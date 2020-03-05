@@ -1,0 +1,23 @@
+[
+    {
+        "name": "apichanges",
+        "image": "${image}",
+        "essential": true,
+        "command": [
+	    "work_dir=/home/apichanges",
+	    "publish",
+            "cache-upload"
+        ],
+        "environment": [],
+	"mountPoints": [],
+        "volumesFrom": [],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${log_group}",
+                "awslogs-region": "${region}",
+                "awslogs-stream-prefix": "fargate"
+            }
+        }
+    }
+]
