@@ -1,0 +1,58 @@
+{% macro render_release_summary(release) %}
+<p class="title is-5">
+  <a href="/archive/changes/{{ release.id[:6] }}.html">
+    {{release.created.strftime('%Y/%m/%d %H:%M')}}</a></p>
+  <ul>
+    {% for svc_change in release %}
+      <li><span class="content">{{svc_change.slug}}</span></li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+
+{% macro render_service_summary(release, svc_change, include_name=True) %}
+<p class="title is-5 is-marginless">
+  <a href="/archive/changes/{{ release.id[:6] }}-{{svc_change.name}}.html">
+    {{release.created.strftime('%Y/%m/%d')}}
+    {% if include_name %} - {{ svc_change.name }} - {% else %} - {% endif %}
+    {% if svc_change.count_new %}{{svc_change.count_new}} new {% endif %}
+    {% if svc_change.count_updated %}{{svc_change.count_updated}} updated {% endif %}
+    api methods</a>
+</p>
+{% if svc_change.change_log %}
+<p class="service-change">
+  <span class="is-small tag is-danger">Changes</span> &nbsp;
+  {{ svc_change.change_log}}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro render_service_change(api, svc_change, open=False) %}
+  {% if svc_change.change_log %}
+  <p style="margin-bottom: 0.5em">
+    <span class="tag is-danger">Changes</span>&nbsp;
+    {{ svc_change.change_log }}</p>
+  {% endif %}
+
+  {% for op_name in svc_change.ops_added %}
+  <details id="{{op_name}}">
+    <summary><span class="has-text-success">{{ op_name }}</span>&nbsp;(new)</summary>
+    <span><a href="#{{op_name}}">Link ¶</a></span>
+    {{ api.render_operation(svc_change, op_name) | safe }}
+  </details>
+  {% endfor %}
+
+  {% for op_name in svc_change.ops_updated %}
+  <details id="{{op_name}}">
+    <summary><span class="has-text-info">{{ op_name }}</span>&nbsp;(updated)</summary>
+    <span><a href="#{{op_name}}">Link ¶</a></span><br/>
+    <span><em class="is-danger">Changes</em> ({{svc_change.ops_changes[op_name]|join(', ')}})</span>
+    {% if svc_change.ops_changes[op_name]|length == 2 %}<br/>
+    Request <pre>{{svc_change.ops_changes[op_name]['request']|pprint}}</pre>
+    Response <pre>{{svc_change.ops_changes[op_name]['response']|pprint}}</pre>
+    {% else %}
+    <pre>{{svc_change.ops_changes[op_name].values()|first|pprint}}</pre>
+    {% endif %}
+    {{ api.render_operation(svc_change, op_name) | safe }}
+  </details>
+  {% endfor %}
+{% endmacro %}

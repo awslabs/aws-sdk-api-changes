@@ -1,0 +1,63 @@
+{% extends "template.j2" %}
+{% from "macros.j2" import render_service_change %}
+
+{% block page_head %}
+<script type="text/javascript">
+  function focusPermaLinks() {
+     if (!(window.location.hash)) {
+        return null;
+     }
+     var linkId = window.location.hash.substring(1);
+     var methodDoc = document.getElementById(linkId)
+     methodDoc.open = true;
+     methodDoc.scrollIntoView();
+  }
+  window.onload = focusPermaLinks
+</script>
+{% endblock %}
+
+{% block navigation %}
+
+<nav class="breadcrumb is-left" style="padding-left: 3em;" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="/">API Changes</a></li>
+    <li><a href="/archive/service">Services</a></li>
+    <li><a href="/archive/service/{{service_change.name}}">{{service_change.title}}</a>
+    <li class="is-active"><a href="#" aria-current="page">
+	{{commit.created.strftime('%Y-%m-%d')}}</a></li>
+  </ul>
+</nav>
+    
+{% endblock %}
+
+{% block topmast %}
+    <section style="padding-bottom: 1em" class="section">
+      <div class="container">
+	<h1 class="title has-text-centered">
+          <span class="is-inline-block {{icon_style(service_change.name)}}">&nbsp;</span> &nbsp; {{service_change.title}}
+	</h1>
+      </div>
+    </section>
+
+{% endblock %}
+
+{% block content %}
+
+<section class="section" style="padding-top: 1em">
+  <div class="tile is-ancestor">
+    <div class="tile is-12 is-vertical is-parent">
+      <div class="tile is-child box">
+	<p class="title is-5">
+	    {{commit.created.strftime('%Y/%m/%d')}}
+	    - {{service_change.title}} -
+	    {% if service_change.count_new %}{{service_change.count_new}} new {% endif %}
+	    {% if service_change.count_updated %}{{service_change.count_updated}} updated {% endif %}
+	    api methods
+	</p>
+	{{ render_service_change(api, service_change, open=True) }}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

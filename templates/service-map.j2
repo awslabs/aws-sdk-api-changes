@@ -1,0 +1,40 @@
+{% extends "template.j2" %}
+
+{% block navigation %}
+
+<nav class="breadcrumb is-left" style="padding-left: 3em;" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="/">API Changes</a></li>
+    <li class="is-active"><a href="#" aria-current="page">Services</a></li>
+  </ul>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+
+<section class="section" style="padding-top: 1em">
+  <div class="tile is-ancestor">
+    <div class="tile is-12 is-vertical is-parent">
+      {% for service in services %}
+      <div class="tile is-child box">
+	<div class="columns">
+	  <div class="column" style="flex: none">
+	    <a href="/archive/service/{{service}}">
+	      <span class="is-block {{ icon_style(service)}}"></span>
+	    </a>
+	  </div>
+	  <div class="column">
+	    <span class="title is-5"><a href="./{{service}}">
+		{{api.get_service_title(service, changes[service])}}</a>
+	      ({{changes[service]|length}} Changes) </span> - Updated
+	      {{ api.get_human_age(changes[service][0].created) }}
+	  </div>
+	</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

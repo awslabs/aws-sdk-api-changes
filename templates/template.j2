@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  {% from "macros.j2" import render_service_change %}
+  <head>    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block title %}
+    <title>AWS API Changes</title>
+    {% endblock %}
+
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2578679-3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-2578679-3');
+    </script>
+
+    <link rel="stylesheet" href="/css/bulma.min.css"/>
+    <link rel="stylesheet" href="/css/docutils.css"/>
+    <link rel="stylesheet" href="/sprite/images.css"/>
+    <link rel="stylesheet" href="/css/site.css"/>
+    <link rel="alternate" type="application/rss+xml" title="AWS API Changes"
+	  href="/feed/feed.rss"/>
+    {% block page_head %}
+    {% endblock %}
+  </head>
+  <body>
+
+    {% block topmast %}
+    
+    <section style="padding: 1em" class="section">
+      <div class="container">
+	<h1 class="title has-text-centered">
+          <span class="is-inline-block {{ icon_style('aws') }}">&nbsp;</span> API Changes <a href="/feed/feed.rss"><img src="/icons/feed-icon-28x28.png"/></a>
+	</h1>
+      </div>
+    </section>
+    {% endblock %}
+
+    {% block navigation %}
+
+    {% endblock %}
+    
+    {% block content %}
+    <section class="section" style="padding-top: 1em">
+      <div class="tile is-ancestor">
+	<div class="tile is-12 is-vertical is-parent">
+	  {% for release in releases %}
+	  <div class="tile is-child box">
+	    <p class="title is-4">
+	      <a href="/archive/changes/{{release.id[:6]}}.html">{{release.created.strftime('%Y/%m/%d %H:%M')}}</a> ({{ release.size }} changes)</p>
+	    {% for svc_change in release %}
+	    {{ render_service_change(api, svc_change) }}
+	    {% endfor %}
+	  </div>
+	  {% endfor %}
+	</div>
+      </div>
+    </section>
+    {% endblock content %}
+
+    <footer class="footer">
+      <div class="content has-text-centered">
+	<p>
+	  <strong>AWS API Changes</strong>
+	  <em>Built for Builders by Builders.</em>
+	</p>
+	{% block footer %}
+	{% endblock footer %}
+      </div>
+    </footer>
+  </body>
+</html>

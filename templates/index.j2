@@ -1,0 +1,37 @@
+{% extends "template.j2" %}
+{% from "macros.j2" import render_service_summary %}
+
+
+{% block content %}
+
+<section id="content" class="section" style="padding-top: 1em">
+  <div class="tile is-ancestor">
+    <div class="tile is-12 is-vertical is-parent">
+      {% for release in releases %}
+      {% for svc_change in release %}
+      <div class="tile is-child box">
+	<div class="columns">
+	  <div class="column" style="flex: none">
+	    <a href="/archive/service/{{svc_change.name}}">
+	      <span class="is-inline-block {{ icon_style(svc_change.name) }}">&nbsp;</span>
+	    </a>
+	  </div>
+	  <div class="column">
+	    {{ render_service_summary(release, svc_change) }}
+	  </div>
+	</div>
+      </div>
+      {% endfor %}
+      {% endfor %}	   
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block footer %}
+{% if api.build_time %}
+<span>Generated <i>{{api.build_time.strftime('%Y-%m-%d %H:%M')}}</i></span>
+{% endif %}
+{% endblock %}
