@@ -1,12 +1,12 @@
 
 resource "aws_ecs_task_definition" "app" {
-  family                   = var.app
-  container_definitions    = templatefile(
+  family = var.app
+  container_definitions = templatefile(
     "task-definitions/sitebuild.json", {
-      image = "${aws_ecr_repository.registry.repository_url}:latest",
+      image     = "${aws_ecr_repository.registry.repository_url}:latest",
       log_group = "/fargate/tasks/${var.app}",
-      region = data.aws_region.current.name})
-      
+  region = data.aws_region.current.name })
+
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.ecs_task_exec_role.arn
   task_role_arn            = aws_iam_role.app_role.arn
@@ -28,7 +28,7 @@ variable "logs_retention_in_days" {
 }
 
 resource "aws_cloudwatch_log_group" "logs" {
-  name = "/fargate/tasks/${var.app}"
+  name              = "/fargate/tasks/${var.app}"
   retention_in_days = 90
-  tags = var.resource_tags
+  tags              = var.resource_tags
 }

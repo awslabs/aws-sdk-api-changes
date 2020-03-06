@@ -1,7 +1,5 @@
-
 def get_icon(service_name):
-    return "/icons/%s.png" % (
-        ICON_SERVICE_MAP.get(service_name).lower())
+    return "/icons/%s.png" % (ICON_SERVICE_MAP.get(service_name).lower())
 
 
 def get_icon_style(service_name):
@@ -10,7 +8,7 @@ def get_icon_style(service_name):
 
 
 ICON_SERVICE_MAP = {
-    'aws': 'AWS-Cloud-alt',
+    "aws": "AWS-Cloud-alt",
     "a2i-runtime.sagemaker": "Amazon-SageMaker",
     "a4b": "Alexa-For-Business",
     "access-analyzer": "AWS-Identity-and-Access-Management_IAM",
@@ -221,5 +219,5 @@ ICON_SERVICE_MAP = {
     "workmail": "Amazon-WorkMail",
     "workmailmessageflow": "Amazon-WorkMail",
     "workspaces": "Amazon-Workspaces",
-    "xray": "AWS-X-Ray"
+    "xray": "AWS-X-Ray",
 }

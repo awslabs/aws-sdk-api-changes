@@ -1,20 +1,18 @@
-from botocore.docs.docstring import ClientMethodDocstring
-from botocore import model, hooks, xform_name
-from docutils.core import publish_parts
-from docutils.writers.html5_polyglot import Writer, HTMLTranslator
 import logging
 
+from botocore import hooks, model, xform_name
+from botocore.docs.docstring import ClientMethodDocstring
+from docutils.core import publish_parts
+from docutils.writers.html5_polyglot import HTMLTranslator, Writer
 
-log = logging.getLogger('apichanges.model')
+log = logging.getLogger("apichanges.model")
 
 
 class ServiceModel(model.ServiceModel):
-
     def __init__(self, service_description, service_name=None):
         super(ServiceModel, self).__init__(service_description, service_name)
         # Use our shape factory
-        self._shape_resolver = ShapeResolver(
-            service_description.get('shapes', {}))
+        self._shape_resolver = ShapeResolver(service_description.get("shapes", {}))
 
 
 class ShapeVisitor(object):
@@ -77,13 +75,12 @@ class EqualityVisitor(ShapeVisitor):
         return repr(shape) == repr(other)
 
     def visit_map(self, shape, other):
-        return (
-            self.process(shape.key, other.key) and
-            self.process(shape.value, other.value))
+        return self.process(shape.key, other.key) and self.process(
+            shape.value, other.value
+        )
 
 
 class ReferenceVisitor(ShapeVisitor):
-
     def visit_structure(self, shape, name):
         for m in shape.members.values():
             if self.process(m, name):
@@ -94,9 +91,9 @@ class ReferenceVisitor(ShapeVisitor):
         return self.process(shape.member, shape_name)
 
     def visit_map(self, shape, shape_name):
-        return (
-            self.process(shape.key, shape_name) or
-            self.process(shape.value, shape_name))
+        return self.process(shape.key, shape_name) or self.process(
+            shape.value, shape_name
+        )
 
     def visit_string(self, shape, shape_name):
         return False
@@ -106,7 +103,6 @@ class ReferenceVisitor(ShapeVisitor):
 
 
 class TypeRepr(ShapeVisitor):
-
     def visit_structure(self, shape):
         d = {}
         for k, m in shape.members.items():
@@ -121,21 +117,19 @@ class TypeRepr(ShapeVisitor):
 
     def visit_string(self, shape):
         if shape.enum:
-            return ' | '.join(shape.enum)
-        return 'string'
+            return " | ".join(shape.enum)
+        return "string"
 
     def visit_shape(self, shape):
         return shape.type_name
 
 
 class DeltaVisitor(ShapeVisitor):
-
     def visit_structure(self, new, other):
         if type(new) != type(other):
             return TypeRepr().process(new)
         added = set(new.members).difference(other.members)
-        modified = {
-            a: TypeRepr().process(new.members[a]) for a in added}
+        modified = {a: TypeRepr().process(new.members[a]) for a in added}
         for m in new.members:
             if m in added:
                 continue
@@ -158,7 +152,6 @@ class DeltaVisitor(ShapeVisitor):
 
 
 class ComparableShape(object):
-
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -195,10 +188,10 @@ class ShapeResolver(model.ShapeResolver):
 
     # Any type not in this mapping will default to the Shape class.
     SHAPE_CLASSES = {
-        'structure': StructureShape,
-        'list': ListShape,
-        'map': MapShape,
-        'string': StringShape
+        "structure": StructureShape,
+        "list": ListShape,
+        "map": MapShape,
+        "string": StringShape,
     }
 
     DEFAULT_SHAPE = Shape
@@ -210,11 +203,11 @@ class ShapeResolver(model.ShapeResolver):
         except KeyError:
             raise model.NoShapeFoundError(shape_name)
         try:
-            shape_cls = self.SHAPE_CLASSES.get(
-                shape_model['type'], self.DEFAULT_SHAPE)
+            shape_cls = self.SHAPE_CLASSES.get(shape_model["type"], self.DEFAULT_SHAPE)
         except KeyError:
             raise model.InvalidShapeError(
-                "Shape is missing required key 'type': %s" % shape_model)
+                "Shape is missing required key 'type': %s" % shape_model
+            )
         if member_traits:
             shape_model = shape_model.copy()
             shape_model.update(member_traits)
@@ -224,7 +217,7 @@ class ShapeResolver(model.ShapeResolver):
 
 def diff_model(new, old=None):
     new = ServiceModel(new)
-    log.debug('delta diffing service:%s', new.service_name)
+    log.debug("delta diffing service:%s", new.service_name)
     if old:
         old = ServiceModel(old)
         new_methods = set(new.operation_names).difference(old.operation_names)
@@ -259,20 +252,23 @@ def diff_model(new, old=None):
         op_delta = {}
         op_shape = new.operation_model(op)
         if op_shape.input_shape and op_shape.input_shape.name in mshape_map:
-            op_delta['request'] = d_i = mshape_map[op_shape.input_shape.name]
+            op_delta["request"] = d_i = mshape_map[op_shape.input_shape.name]
         if op_shape.output_shape and op_shape.output_shape.name in mshape_map:
-            op_delta['response'] = mshape_map[op_shape.output_shape.name]
+            op_delta["response"] = mshape_map[op_shape.output_shape.name]
 
         # sigh ec2 service specific hack
-        if (new.service_name == 'ec2' and 'request' in op_delta
-                and 'TagSpecifications' in d_i):
-            d_i.pop('TagSpecifications')
+        if (
+            new.service_name == "ec2"
+            and "request" in op_delta
+            and "TagSpecifications" in d_i
+        ):
+            d_i.pop("TagSpecifications")
             if not d_i:
-                op_delta.pop('request')
+                op_delta.pop("request")
         if not op_delta:
             continue
-        if len(op_delta) == 2 and op_delta['request'] == op_delta['response']:
-            op_delta = {'both': op_delta['request']}
+        if len(op_delta) == 2 and op_delta["request"] == op_delta["response"]:
+            op_delta = {"both": op_delta["request"]}
         changes.append(UpdatedMethod(new.service_name, op, op_delta))
 
     if changes:
@@ -296,21 +292,22 @@ class ReleaseDelta(object):
         return (
             "<release:{commit[tag]} created:{commit[created_at]:%Y-%m-%d} "
             "commit:{commit[commit_id]:.5} services:{service_count} "
-            "changes:{change_count}>").format(
-                commit=self.commit,
-                service_count=len({s.name for s in self}),
-                change_count=sum([len(s) for s in self]))
+            "changes:{change_count}>"
+        ).format(
+            commit=self.commit,
+            service_count=len({s.name for s in self}),
+            change_count=sum([len(s) for s in self]),
+        )
 
 
 class ServiceChange(object):
-
     def __init__(self, service, changes, new=False):
         self.new = new
         self.service = service
         self.changes = changes
         self.count_new = self.count_updated = 0
         for c in self.changes:
-            if c.type == 'new':
+            if c.type == "new":
                 self.count_new += 1
             else:
                 self.count_updated += 1
@@ -323,7 +320,7 @@ class ServiceChange(object):
 
     @property
     def title(self):
-        return self.service.metadata.get('serviceFullName', self.name)
+        return self.service.metadata.get("serviceFullName", self.name)
 
     def __len__(self):
         return len(self.changes)
@@ -332,42 +329,50 @@ class ServiceChange(object):
         return iter(self.changes)
 
     def __repr__(self):
-        return ("<service:{name} date:{commit[created_at]:%Y-%m-%d} "
-                "updated:{updated} new:{new} logs:{logs}>").format(
-                    name=self.name,
-                    commit=self.commit,
-                    updated=self.count_updated,
-                    new=self.count_new,
-                    logs=self.logs and 'yes' or 'no')
+        return (
+            "<service:{name} date:{commit[created_at]:%Y-%m-%d} "
+            "updated:{updated} new:{new} logs:{logs}>"
+        ).format(
+            name=self.name,
+            commit=self.commit,
+            updated=self.count_updated,
+            new=self.count_new,
+            logs=self.logs and "yes" or "no",
+        )
 
     LOG_ID_MAP = {
-        'Elastic Load Balancing v2': 'elbv2',
-        'Lex Runtime Service': 'lexruntime',
-        'SFN': 'stepfunctions',
-        'IoT 1Click Devices Service': 'iot1click-devices',
-        'SageMaker A2I Runtime': 'augmentedairuntime',
-        'Cognito Identity Provider': 'cognitoidentityserviceprovider',
+        "Elastic Load Balancing v2": "elbv2",
+        "Lex Runtime Service": "lexruntime",
+        "SFN": "stepfunctions",
+        "IoT 1Click Devices Service": "iot1click-devices",
+        "SageMaker A2I Runtime": "augmentedairuntime",
+        "Cognito Identity Provider": "cognitoidentityserviceprovider",
         # next two might be a specific hack around a particular release/feature
-        'Cost Explorer': 'savingsplans',
-        'Budgets': 'savingsplans',
+        "Cost Explorer": "savingsplans",
+        "Budgets": "savingsplans",
     }
 
     def associate_logs(self, change_log):
         candidates = (
-            self.LOG_ID_MAP.get(self.service.metadata.get('serviceId')),
-            self.service.metadata.get('serviceId'),
-            self.service.metadata.get('signingName'),
-            self.service.metadata.get('endpointPrefix'),
+            self.LOG_ID_MAP.get(self.service.metadata.get("serviceId")),
+            self.service.metadata.get("serviceId"),
+            self.service.metadata.get("signingName"),
+            self.service.metadata.get("endpointPrefix"),
             # sso oidc
-            self.service.metadata.get(
-                'serviceAbbreviation', '').replace(' ', '-'),
-            '-'.join([c for c in self.service.metadata.get(
-                'uid', '').split('-') if not c.isdigit()]),
-            self.service.metadata.get('endpointPrefix', '').replace('-', ''),
-            self.service.metadata.get('serviceId', '').replace(' ', ''),
-            self.service.metadata.get('serviceId', '') + 'service',
-            self.service.service_name.replace('-', '') + 'service',
-            self.service.metadata.get('serviceId', '').replace(' ', '-'))
+            self.service.metadata.get("serviceAbbreviation", "").replace(" ", "-"),
+            "-".join(
+                [
+                    c
+                    for c in self.service.metadata.get("uid", "").split("-")
+                    if not c.isdigit()
+                ]
+            ),
+            self.service.metadata.get("endpointPrefix", "").replace("-", ""),
+            self.service.metadata.get("serviceId", "").replace(" ", ""),
+            self.service.metadata.get("serviceId", "") + "service",
+            self.service.service_name.replace("-", "") + "service",
+            self.service.metadata.get("serviceId", "").replace(" ", "-"),
+        )
 
         if not change_log:
             return
@@ -377,13 +382,13 @@ class ServiceChange(object):
             if logs:
                 break
         if not logs:
-            log.warning("%s no change log entry found: %s",
-                        self.name, list(change_log.keys()))
+            log.warning(
+                "%s no change log entry found: %s", self.name, list(change_log.keys())
+            )
         self.logs = logs
 
 
 class Change(object):
-
     @property
     def service_name(self):
         return self.service.service_name
@@ -396,7 +401,8 @@ class Change(object):
             event_emitter=hooks.HierarchicalEmitter(),
             method_description=self.op.documentation,
             example_prefix="client.%s" % xform_name(self.op.name),
-            include_signature=False)
+            include_signature=False,
+        )
         return self._render_docutils(method_doc)
 
     def _render_docutils(self, method_doc):
@@ -404,9 +410,10 @@ class Change(object):
         method_writer.translator_class = HTMLTranslator
         parts = publish_parts(
             str(method_doc),
-            settings_overrides={'report_level': 4},
-            writer=method_writer)
-        return parts['fragment']
+            settings_overrides={"report_level": 4},
+            writer=method_writer,
+        )
+        return parts["fragment"]
 
 
 class NewMethod(Change):
@@ -418,8 +425,7 @@ class NewMethod(Change):
         self.op = op
 
     def __repr__(self):
-        return "New Method: service:{} method:{}".format(
-            self.service_name, self.op)
+        return "New Method: service:{} method:{}".format(self.service_name, self.op)
 
 
 class UpdatedMethod(Change):
@@ -432,6 +438,6 @@ class UpdatedMethod(Change):
         self.delta = delta
 
     def __repr__(self):
-        return ("Updated Method: service:{} method:{} "
-                "delta:{}").format(
-                    self.service, self.op, self.delta)
+        return ("Updated Method: service:{} method:{} " "delta:{}").format(
+            self.service, self.op, self.delta
+        )

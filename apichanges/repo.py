@@ -1,18 +1,19 @@
 import bisect
-from datetime import datetime, timedelta
-from dateutil.tz import tzoffset, tzutc
-from dateutil.parser import parse as parse_date
-from distutils.version import LooseVersion
-from functools import lru_cache
 import json
 import logging
 import os
-import pygit2
 import re
+from datetime import datetime, timedelta
+from distutils.version import LooseVersion
+from functools import lru_cache
+
+import pygit2
+from dateutil.parser import parse as parse_date
+from dateutil.tz import tzoffset, tzutc
 
 from .model import diff_model
 
-log = logging.getLogger('apichanges.repo')
+log = logging.getLogger("apichanges.repo")
 
 
 def commit_date(commit):
@@ -29,13 +30,20 @@ def commit_dict(commit, committed_date=None):
         committer=commit.committer.name,
         commitetr_email=commit.committer.email,
         message=commit.message,
-        parent_count=len(commit.parents))
+        parent_count=len(commit.parents),
+    )
 
 
 class CommitProcessor(object):
-
-    def __init__(self, repo, model_prefix, model_suffix, change_dir=None,
-                 services=(), debug=False):
+    def __init__(
+        self,
+        repo,
+        model_prefix,
+        model_suffix,
+        change_dir=None,
+        services=(),
+        debug=False,
+    ):
         self.repo = repo
         self.model_prefix = model_prefix
         self.model_suffix = model_suffix
@@ -45,38 +53,44 @@ class CommitProcessor(object):
 
     def load_change_log(self, fid):
         change_log = {}
-        data = json.loads(self.repo[fid].read_raw().decode('utf8'))
+        data = json.loads(self.repo[fid].read_raw().decode("utf8"))
         for n in data:
-            change_log.setdefault(n['category'].strip('`').lower(), []).append(
-                n['description'])
+            change_log.setdefault(n["category"].strip("`").lower(), []).append(
+                n["description"]
+            )
         return change_log
 
     def process(self, commit, change_diff):
         if self.debug:
-            log.debug((
-                "commit:{commit_id:.8} tag:{tag} date:{created_at:%Y/%m/%d %H:%M}\n"
-                " stats: {stats}"
-            ).format(
+            log.debug(
+                (
+                    "commit:{commit_id:.8} tag:{tag} date:{created_at:%Y/%m/%d %H:%M}\n"
+                    " stats: {stats}"
+                ).format(
                     stats=change_diff.stats.format(
-                        pygit2.GIT_DIFF_STATS_SHORT, 80).strip(),
-                    **commit))
+                        pygit2.GIT_DIFF_STATS_SHORT, 80
+                    ).strip(),
+                    **commit
+                )
+            )
         service_changes = []
 
         change_path = change_log = None
         if self.change_dir:
             change_path = os.path.join(
-                self.change_dir, '%s.json' % commit['tag'].lstrip('v'))
+                self.change_dir, "%s.json" % commit["tag"].lstrip("v")
+            )
 
         # Get file map so we can ensure change log first.
         file_map = {d.new_file.path: d for d in change_diff.deltas}
         if change_path and change_path in file_map:
-            change_log = self.load_change_log(
-                file_map.get(change_path).new_file.id)
+            change_log = self.load_change_log(file_map.get(change_path).new_file.id)
 
         for dpath, d in [
-                (f, d) for f, d in file_map.items() if
-                f.startswith(self.model_prefix) and
-                f.endswith(self.model_suffix)]:
+            (f, d)
+            for f, d in file_map.items()
+            if f.startswith(self.model_prefix) and f.endswith(self.model_suffix)
+        ]:
             if self.services:
                 found = False
                 for s in self.services:
@@ -85,26 +99,27 @@ class CommitProcessor(object):
                 if not found:
                     continue
             if self.debug:
-                log.debug('api model change {} change: {}'.format(
-                    dpath, d.status_char()))
-            if d.status_char() == 'A':
-                new = json.loads(
-                    self.repo[d.new_file.id].read_raw().decode('utf8'))
+                log.debug(
+                    "api model change {} change: {}".format(dpath, d.status_char())
+                )
+            if d.status_char() == "A":
+                new = json.loads(self.repo[d.new_file.id].read_raw().decode("utf8"))
                 old = None
-            elif d.status_char() == 'M':
-                new = json.loads(
-                    self.repo[d.new_file.id].read_raw().decode('utf8'))
-                old = json.loads(
-                    self.repo[d.old_file.id].read_raw().decode('utf8'))
+            elif d.status_char() == "M":
+                new = json.loads(self.repo[d.new_file.id].read_raw().decode("utf8"))
+                old = json.loads(self.repo[d.old_file.id].read_raw().decode("utf8"))
             else:
                 log.warning(
-                    'service file unknown change commit:%s file:%s change:%s',
-                    commit['commit_id'], dpath, d.status_char())
+                    "service file unknown change commit:%s file:%s change:%s",
+                    commit["commit_id"],
+                    dpath,
+                    d.status_char(),
+                )
                 continue
             try:
                 svc_change = diff_model(new, old)
             except Exception:
-                log.error('commit:%s error processing %s', commit['commit_id'], dpath)
+                log.error("commit:%s error processing %s", commit["commit_id"], dpath)
                 raise
                 continue
 
@@ -122,6 +137,7 @@ class CommitProcessor(object):
 class TagWalker(object):
     """Iter commits and diffs on a git repo.
     """
+
     # twin peaks styled, not texas ranger
     def __init__(self, repo):
         self.repo = repo
@@ -140,23 +156,24 @@ class TagWalker(object):
         end = self.get_target_tag(tags, until, end=True)
 
         if start == end:
-            log.debug('walker exit start == end')
+            log.debug("walker exit start == end")
             return
 
         for idx, t in enumerate(
-                tags[tags.index(start):tags.index(end) + 1], tags.index(start)):
-            previous = self.get_tag_commit(tags[idx-1])
+            tags[tags.index(start) : tags.index(end) + 1], tags.index(start)
+        ):
+            previous = self.get_tag_commit(tags[idx - 1])
             cur = self.get_tag_commit(tags[idx])
             change_diff = self.repo.diff(previous, cur)
             info = commit_dict(cur)
-            info['tag'] = str(t).rsplit('/', 1)[-1]
-            log.debug('walking tag: %s date:%s' % (t, info['created_at']))
+            info["tag"] = str(t).rsplit("/", 1)[-1]
+            log.debug("walking tag: %s date:%s" % (t, info["created_at"]))
             yield previous, cur, info, change_diff
 
     def resolve(self, target):
         if target:
             try:
-                self.repo.lookup_reference('refs/tags/%s' % target)
+                self.repo.lookup_reference("refs/tags/%s" % target)
             except (KeyError, pygit2.InvalidSpecError):
                 target = parse_date(target).astimezone(tzutc())
         return target
@@ -181,7 +198,7 @@ class TagWalker(object):
         # bisect on version
         if not isinstance(target, datetime):
             indexer = end and bisect.bisect_left or bisect.bisect_right
-            idx = indexer(tags, LooseVersion('refs/tags/%s' % target))
+            idx = indexer(tags, LooseVersion("refs/tags/%s" % target))
             if idx == len(tags):
                 return tags[-1]
             return tags[idx]
@@ -204,10 +221,12 @@ class TagWalker(object):
 
     @lru_cache(5)
     def get_tag_set(self):
-        regex = re.compile('^refs/tags')
+        regex = re.compile("^refs/tags")
         tags = list(
-            map(LooseVersion,
-                filter(lambda r: regex.match(r),
-                       self.repo.listall_references())))
+            map(
+                LooseVersion,
+                filter(lambda r: regex.match(r), self.repo.listall_references()),
+            )
+        )
         tags.sort()
         return tags

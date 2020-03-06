@@ -3,9 +3,9 @@
 ######
 
 resource "aws_iam_role" "app_role" {
-  name  = "${var.app}-task-role"
+  name               = "${var.app}-task-role"
   assume_role_policy = data.aws_iam_policy_document.app_role_assume_role_policy.json
-  tags = var.resource_tags
+  tags               = var.resource_tags
 }
 
 resource "aws_iam_role_policy" "app_policy" {
@@ -42,9 +42,9 @@ data "aws_iam_policy_document" "app_role_assume_role_policy" {
 
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html
 resource "aws_iam_role" "ecs_task_exec_role" {
-  name = "${var.app}-ecs-exec"
+  name               = "${var.app}-ecs-exec"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-  tags = var.resource_tags
+  tags               = var.resource_tags
 }
 
 # allow task execution role to be assumed by ecs
@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 
 # allow task execution role to work with ecr and cw logs
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
-  role = aws_iam_role.ecs_task_exec_role.name
+  role       = aws_iam_role.ecs_task_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
@@ -73,7 +73,7 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
 resource "aws_iam_role" "cloudwatch_events_role" {
   name               = "${var.app}-events"
   assume_role_policy = data.aws_iam_policy_document.events_assume_role_policy.json
-  tags = var.resource_tags
+  tags               = var.resource_tags
 }
 
 
@@ -105,8 +105,8 @@ data "aws_iam_policy_document" "events_ecs" {
 }
 
 resource "aws_iam_role_policy" "events_ecs" {
-  name = "${var.app}-events-ecs"
-  role = aws_iam_role.cloudwatch_events_role.id
+  name   = "${var.app}-events-ecs"
+  role   = aws_iam_role.cloudwatch_events_role.id
   policy = data.aws_iam_policy_document.events_ecs.json
 }
 
@@ -114,7 +114,7 @@ resource "aws_iam_role_policy" "events_ecs" {
 # allow events role to pass role to task execution role and app role
 data "aws_iam_policy_document" "passrole" {
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = ["iam:PassRole"]
 
     resources = [
@@ -125,7 +125,7 @@ data "aws_iam_policy_document" "passrole" {
 }
 
 resource "aws_iam_role_policy" "events_ecs_passrole" {
-  name = "${var.app}-events-ecs-passrole"
-  role = aws_iam_role.cloudwatch_events_role.id
+  name   = "${var.app}-events-ecs-passrole"
+  role   = aws_iam_role.cloudwatch_events_role.id
   policy = data.aws_iam_policy_document.passrole.json
 }

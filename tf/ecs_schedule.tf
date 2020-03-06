@@ -7,7 +7,7 @@ resource "aws_cloudwatch_event_rule" "scheduled_build" {
   name                = "${var.app}-build"
   description         = "Runs fargate task ${var.app}: ${var.schedule_expression}"
   schedule_expression = var.schedule_expression
-  tags = var.resource_tags
+  tags                = var.resource_tags
 }
 
 resource "aws_cloudwatch_event_target" "scheduled_build" {
@@ -25,8 +25,8 @@ resource "aws_cloudwatch_event_target" "scheduled_build" {
 
     network_configuration {
       assign_public_ip = true
-      security_groups = [aws_security_group.nsg_task.id]
-      subnets = split(",", var.subnets)
-    }    
+      security_groups  = [aws_security_group.nsg_task.id]
+      subnets          = split(",", var.subnets)
+    }
   }
 }

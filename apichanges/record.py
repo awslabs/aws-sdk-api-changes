@@ -24,10 +24,11 @@ class ServiceChange:
                 title=s.title,
                 new=s.new,
                 model_file=s.model_file,
-                change_log='\n'.join(s.logs),
-                ops_added=[c.op for c in s if c.type == 'new'],
-                ops_updated=[c.op for c in s if c.type == 'updated'],
-                ops_changes={c.op: c.delta for c in s if c.type == 'updated'})
+                change_log="\n".join(s.logs),
+                ops_added=[c.op for c in s if c.type == "new"],
+                ops_updated=[c.op for c in s if c.type == "updated"],
+                ops_changes={c.op: c.delta for c in s if c.type == "updated"},
+            )
 
     @property
     def count_new(self):
@@ -77,8 +78,8 @@ class Commit:
     def from_commits(cls, releases):
         for r in releases:
             yield cls(
-                id=r.commit['commit_id'],
-                tag=r.commit['tag'],
-                created=r.commit['created_at'],
-                service_changes=list(
-                    ServiceChange.from_changes(r)))
+                id=r.commit["commit_id"],
+                tag=r.commit["tag"],
+                created=r.commit["created_at"],
+                service_changes=list(ServiceChange.from_changes(r)),
+            )

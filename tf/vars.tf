@@ -4,7 +4,7 @@ variable "app" {
 }
 
 variable "vpc" {
-  type    = string
+  type = string
 }
 
 variable "resource_tags" {
@@ -15,11 +15,11 @@ variable "resource_tags" {
 }
 
 variable "domain" {
-  type    = string
+  type = string
 }
 
 variable "access_log_bucket" {
-  type    = string
+  type = string
 }
 
 variable "subnets" {
