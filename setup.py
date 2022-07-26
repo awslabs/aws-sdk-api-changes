@@ -32,7 +32,7 @@ setup(
         "pygit2==0.28.2",
         "python-dateutil==2.8.0",
         "six==1.13.0",
-        "lxml==4.4.2",
+        "lxml==4.9.1",
         "feedgen>=0.9.0",
         "urllib3==1.26.5"
     ],
